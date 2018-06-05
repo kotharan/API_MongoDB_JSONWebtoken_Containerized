@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { getBusinessesByOwnerID } = require('./businesses');
 const { getReviewsByUserID } = require('./reviews');
 const { getPhotosByUserID } = require('./photos');
+const bcrypt = require('bcryptjs');
 
 
 
@@ -10,14 +11,16 @@ const { getPhotosByUserID } = require('./photos');
 
 // To add user
 function insertNewUser(user,mongoDB) {
-     const usersCollection = mongoDB.collection('users');
+     return bcrypt.hash(user.password, 8)
+       .then((passwordHash) => {
      const userValues = {
      userID: user.userID,
      username: user.username,
      email: user.email,
-     password: user.password
+     password: passwordHash
      };
-     return usersCollection.insertOne(userValues)
+     const usersCollection = mongoDB.collection('users');
+     return usersCollection.insertOne(userValues)})
      .then((result) => {
      return Promise.resolve(result.insertedId);
      // let p = Promise.resolve(value);
@@ -43,9 +46,10 @@ function insertNewUser(user,mongoDB) {
      });
 
 // Get user by their userID
-function getUserByuserID(userID,mongoDB) {
+function getUserByID(userID,mongoDB,includePassword) {
      const usersCollection = mongoDB.collection('users');
-     return usersCollection.find({ userID: userID }).toArray()
+     const projection = includePassword ? {} : { password: 0 };
+     return usersCollection.find({ userID: userID }).project(projection).toArray()
      .then((results) => {
      return Promise.resolve(results[0]);
      });
@@ -54,7 +58,7 @@ function getUserByuserID(userID,mongoDB) {
      * Route to get user info by their userid
      */
      router.get('/:userID', function (req, res, next) {
-     getUserByuserID(req.params.userID,req.app.locals.mongoDB)
+     getUserByID(req.params.userID,req.app.locals.mongoDB)
        .then((user) => {if (user) {
             res.status(200).json(user);}
             else
