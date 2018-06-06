@@ -244,6 +244,7 @@ router.get('/:userID/businesses', function (req, res) {
       }
     })
     .catch((err) => {
+         console.error(err);
       res.status(500).json({
         error: "Unable to fetch businesses.  Please try again later."
       });
