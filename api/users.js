@@ -233,22 +233,39 @@ function getallUsers(mongoDB)
  * Route to list all of a user's businesses.
  */
 router.get('/:userID/businesses', function (req, res) {
-  const mysqlPool = req.app.locals.mysqlPool;
-  const userID = parseInt(req.params.userID);
-  getBusinessesByOwnerID(userID, mysqlPool)
-    .then((businesses) => {
-      if (businesses) {
-        res.status(200).json({ businesses: businesses });
-      } else {
-        next();
-      }
-    })
-    .catch((err) => {
-         console.error(err);
-      res.status(500).json({
-        error: "Unable to fetch businesses.  Please try again later."
-      });
-    });
+     //------------------------------------------adding mongo auth to this route
+
+          const mysqlPool = req.app.locals.mysqlPool;
+          const userID = parseInt(req.params.userID);
+          getBusinessesByOwnerID(userID, mysqlPool)
+          .then((iSuccessful) => {
+               if (iSuccessful) {
+                    console.log("successfully");
+                    return generateAuthToken(req.body.userID);
+               } else {
+                    console.error("Not a valid userID");
+                 return Promise.reject(401);
+               }
+          })
+          .then((token) => {
+          res.status(200).json({ token: token });
+          })
+          .catch((err) => {
+               if (err === 401) {
+            res.status(401).json({
+              error: "Invalid user ID and/or password."
+            });
+          } else {
+               console.log("ITSSS HEREEE:: ");
+               console.error(err);
+            res.status(500).json({
+              error: "Unable to verify credentials. Try later."
+            });
+          }
+          });
+ //-----------------------------Mongo ends here for this endpoint
+
+
 });
 
 /*
