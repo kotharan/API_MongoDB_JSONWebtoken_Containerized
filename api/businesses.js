@@ -221,7 +221,6 @@ router.get('/:businessID',requireAuthentication, function (req, res, next) {
       }
     })
     .catch((err) => {
-         console.error(err);
       res.status(500).json({
         error: "Unable to fetch business.  Please try again later."
       });
