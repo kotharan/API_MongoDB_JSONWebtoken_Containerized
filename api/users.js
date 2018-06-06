@@ -96,7 +96,7 @@ function getallUsers(mongoDB)
      });});
      });
 
-
+// TO receive a token with valid userID and Password for login use
 router.post('/login', function (req, res) {
      if (req.body && req.body.userID && req.body.password) {
           getUserByID(req.body.userID,req.app.locals.mongoDB, true)
@@ -149,14 +149,12 @@ router.post('/login', function (req, res) {
  * Route to list all of a user's businesses.
  */
 router.get('/:userID/businesses', function (req, res) {
-     //------------------------------------------adding mongo auth to this route
-
           const mysqlPool = req.app.locals.mysqlPool;
           const userID = parseInt(req.params.userID);
           getBusinessesByOwnerID(userID, mysqlPool)
           .then((iSuccessful) => {
                if (iSuccessful) {
-                    console.log("successfully");
+                    console.log("successfully created a token");
                     return generateAuthToken(req.body.userID);
                } else {
                     console.error("Not a valid userID");
@@ -169,41 +167,49 @@ router.get('/:userID/businesses', function (req, res) {
           .catch((err) => {
                if (err === 401) {
             res.status(401).json({
-              error: "Invalid user ID and/or password."
+              error: "Invalid userID"
             });
           } else {
-               console.log("ITSSS HEREEE:: ");
                console.error(err);
             res.status(500).json({
-              error: "Unable to verify credentials. Try later."
+              error: "Unable to fetch businesses"
             });
           }
           });
- //-----------------------------Mongo ends here for this endpoint
-
-
-});
+ });
 
 /*
  * Route to list all of a user's reviews.
  */
 router.get('/:userID/reviews', function (req, res) {
-  const mysqlPool = req.app.locals.mysqlPool;
-  const userID = parseInt(req.params.userID);
-  getReviewsByUserID(userID, mysqlPool)
-    .then((reviews) => {
-      if (reviews) {
-        res.status(200).json({ reviews: reviews });
+       const mysqlPool = req.app.locals.mysqlPool;
+       const userID = parseInt(req.params.userID);
+       getReviewsByUserID(userID, mysqlPool)
+       .then((isSuccessful) => {
+            if (isSuccessful) {
+                 console.log("successfully created a token");
+                 return generateAuthToken(req.body.userID);
+            } else {
+                 console.error("Not a valid userID");
+              return Promise.reject(401);
+            }
+      })
+      .then((token) => {
+      res.status(200).json({ token: token });
+      })
+      .catch((err) => {
+            if (err === 401) {
+        res.status(401).json({
+          error: "Invalid userID"
+        });
       } else {
-        next();
+            console.error(err);
+        res.status(500).json({
+          error: "Unable to fetch reviews"
+        });
       }
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: "Unable to fetch reviews.  Please try again later."
       });
-    });
-});
+     });
 
 /*
  * Route to list all of a user's photos.
@@ -212,19 +218,30 @@ router.get('/:userID/photos', function (req, res) {
   const mysqlPool = req.app.locals.mysqlPool;
   const userID = parseInt(req.params.userID);
   getPhotosByUserID(userID, mysqlPool)
-    .then((photos) => {
-      if (photos) {
-        res.status(200).json({ photos: photos });
-      } else {
-        next();
-      }
-    })
-    .catch((err) => {
-      res.status(500).json({
-        error: "Unable to fetch photos.  Please try again later."
-      });
-    });
-});
-
+     .then((iamSuccessful) => {
+     if (iamSuccessful) {
+       console.log("successfully created a token");
+       return generateAuthToken(req.body.userID);
+     } else {
+       console.error("Not a valid userID");
+     return Promise.reject(401);
+     }
+     })
+     .then((token) => {
+     res.status(200).json({ token: token });
+     })
+     .catch((err) => {
+     if (err === 401) {
+     res.status(401).json({
+     error: "Invalid userID"
+     });
+     } else {
+     console.error(err);
+     res.status(500).json({
+     error: "Unable to fetch photos"
+     });
+     }
+     });
+     });
 
 exports.router = router;
