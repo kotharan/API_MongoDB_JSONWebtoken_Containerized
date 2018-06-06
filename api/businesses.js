@@ -207,7 +207,6 @@ function getBusinessByID(businessID, mysqlPool) {
 router.get('/:businessID',requireAuthentication, function (req, res, next) {
   const mysqlPool = req.app.locals.mysqlPool;
   const businessID = parseInt(req.params.businessID);
-  console.log("I AM HERE");
   if (req.user !== req.params.userID) {
  res.status(403).json({
  error: "Unauthorized to access the specified resource"
@@ -326,14 +325,12 @@ router.delete('/:businessID', function (req, res, next) {
  * that the specified user ID corresponds to a valid user.
  */
 function getBusinessesByOwnerID(userID, mysqlPool) {
-     console.log("HERE SIR");
   return new Promise((resolve, reject) => {
     mysqlPool.query(
       'SELECT * FROM businesses WHERE ownerid = ?',
       [ userID ],
       function (err, results) {
         if (err) {
-             console.error("ITS AN ERROR");
           reject(err);
         } else {
           resolve(results);

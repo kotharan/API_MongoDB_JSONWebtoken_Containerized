@@ -256,7 +256,6 @@ router.get('/:userID/businesses', function (req, res) {
               error: "Invalid user ID and/or password."
             });
           } else {
-               console.log("ITSSS HEREEE:: ");
                console.error(err);
             res.status(500).json({
               error: "Unable to verify credentials. Try later."
