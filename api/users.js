@@ -5,6 +5,7 @@ const { getReviewsByUserID } = require('./reviews');
 const { getPhotosByUserID } = require('./photos');
 const bcrypt = require('bcryptjs');
 
+const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 
 
 // Mongo Code========================================================
@@ -20,11 +21,11 @@ function insertNewUser(user,mongoDB) {
      password: passwordHash
      };
      const usersCollection = mongoDB.collection('users');
-     return usersCollection.insertOne(userValues)})
+     return usersCollection.insertOne(userValues);})
      .then((result) => {
      return Promise.resolve(result.insertedId);
      // let p = Promise.resolve(value);
-     let p = new Promise((resolve) => { resolve(value); });
+     //let p = new Promise((resolve) => { resolve(value); });
      });
      }
 
@@ -32,7 +33,7 @@ function insertNewUser(user,mongoDB) {
      * Route to add user
      */
 
-     router.post('/users', function (req, res) {
+     router.post('/', function (req, res) {
      if (req.body && req.body.userID && req.body.username && req.body.password) {
           insertNewUser(req.body,req.app.locals.mongoDB)
             .then((id) => {res.status(201).json({ _id: id });})
@@ -57,15 +58,20 @@ function getUserByID(userID,mongoDB,includePassword) {
      /*
      * Route to get user info by their userid
      */
-     router.get('/:userID', function (req, res, next) {
+     router.get('/:userID',requireAuthentication , function (req, res, next) {
+          if (req.user !== req.params.userID) {
+          res.status(403).json({
+          error: "Unauthorized to access the specified resource"
+          });
+          } else {
+
      getUserByID(req.params.userID,req.app.locals.mongoDB)
        .then((user) => {if (user) {
             res.status(200).json(user);}
             else
             { next();}})
        .catch((err) => {res.status(500).json({
-       error: "Error fetching user."
-     });});
+       error: "Error fetching user."});}); }
      });
 
 //To get print all users
@@ -89,6 +95,53 @@ function getallUsers(mongoDB)
        error: "Error fetching user."
      });});
      });
+
+
+router.post('/login', function (req, res) {
+     if (req.body && req.body.userID && req.body.password) {
+          getUserByID(req.body.userID,req.app.locals.mongoDB, true)
+          .then((user) => {
+          if (user) {
+               return bcrypt.compare(req.body.password, user.password);
+               } else {
+                    console.error("HEEERRRREEE");
+                    console.error(err);
+                 return Promise.reject(401);
+               }
+          })
+          .then((loginSuccessful) => {
+               if (loginSuccessful) {
+                    return generateAuthToken(req.body.userID);
+               } else {
+                    console.error("AUTH HEREEE, PASSWORD WAS STORED AS A STRING [NOT SAFE]");
+                 return Promise.reject(401);
+               }
+          })
+          .then((token) => {
+          res.status(200).json({ token: token });
+          })
+          .catch((err) => {
+               if (err === 401) {
+            res.status(401).json({
+              error: "Invalid user ID and/or password."
+            });
+          } else {
+               console.log("ITSSS HEREEE:: ");
+               console.error(err);
+            res.status(500).json({
+              error: "Unable to verify credentials. Try later."
+            });
+          }
+          });
+
+          } else {
+            res.status(400).json({
+              error: "Request body needs user ID and password."
+            });
+          }
+
+          });
+
 
 //=============================================================
 
