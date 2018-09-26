@@ -2,8 +2,6 @@
 
 **Assignment due at 11:59pm on Monday 6/4/2018**
 
-**Demo due by 5:00pm on Friday 6/15/2018**
-
 The goals of this assignment are to use MongoDB to store application data and to start incorporating security features into our API.  There are a few parts to this assignment, as described below.
 
 You are provided some starter code in this repository that implements a solution to assignment 2.  The starter code's API server is implemented in `server.js`, and individual routes are modularized within the `api/` directory.  This code should run out of the box with Docker Compose.  Feel free to use this code as your starting point for this assignment.  You may also use your own solution to assignment 2 as your starting point if you like.
